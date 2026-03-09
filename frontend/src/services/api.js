@@ -1,0 +1,80 @@
+import axios from 'axios'
+
+const api = axios.create({
+  baseURL: '/api',
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 10000,
+})
+
+api.interceptors.request.use(cfg => {
+  const token = localStorage.getItem('sr_token')
+  if (token) cfg.headers.Authorization = `Bearer ${token}`
+  return cfg
+})
+
+api.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('sr_token')
+      localStorage.removeItem('sr_user')
+      window.location.reload()
+    }
+    return Promise.reject(err)
+  }
+)
+
+export const authAPI = {
+  login: (username, password) => api.post('/login', { username, password }),
+}
+
+export const ambulanceAPI = {
+  getAll:         ()               => api.get('/ambulances'),
+  create:         (data)           => api.post('/ambulances', data),
+  updateLocation: (vid, lat, lng)  => api.patch(`/ambulances/${vid}/location`, { lat, lng }),
+  delete:         (vid)            => api.delete(`/ambulances/${vid}`),
+}
+
+export const hospitalAPI = {
+  getAll: () => api.get('/hospitals'),
+  create: (data) => api.post('/hospitals', data),
+}
+
+export const incidentAPI = {
+  getAll:  ()     => api.get('/incidents'),
+  report:  (data) => api.post('/incidents', data),
+}
+
+export const dispatchAPI = {
+  getAll:       () => api.get('/dispatch-logs'),
+  updateStatus: (id, status) => api.patch(`/dispatch-logs/${id}/status?status=${status}`),
+}
+
+export const dashboardAPI = {
+  getStats: () => api.get('/dashboard/stats'),
+}
+
+// Geocoding via Nominatim (OpenStreetMap) — free, no API key needed
+export const geocode = async (query) => {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=IN`
+  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
+  const data = await res.json()
+  if (data.length === 0) throw new Error('Location not found')
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name }
+}
+
+// WebSocket factory
+export const createWS = (onMessage, onOpen, onClose) => {
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const host  = window.location.hostname
+  const ws    = new WebSocket(`${proto}://${host}:8000/ws/live`)
+  ws.onopen    = onOpen  || (() => console.log('WS connected'))
+  ws.onclose   = onClose || (() => console.log('WS disconnected'))
+  ws.onerror   = (e) => console.warn('WS error', e)
+  ws.onmessage = (e) => {
+    try { onMessage(JSON.parse(e.data)) } catch {}
+  }
+  return ws
+}
+
+export default api
