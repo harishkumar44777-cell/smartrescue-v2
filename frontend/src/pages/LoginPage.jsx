@@ -48,7 +48,7 @@ export default function LoginPage({ onLogin }) {
               <label style={{ fontSize: 11, fontWeight: 700, color: '#475569', display: 'block', marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{label}</label>
               <input type={type} value={form[key]} onChange={set(key)}
                 onKeyDown={e => e.key === 'Enter' && submit()}
-                placeholder={key === 'username' ? 'harish' : '••••'}
+                placeholder={key === 'username' ? 'hari' : '••••'}
                 style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #e2e8f0', fontSize: 14, color: '#1e293b', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
                 onFocus={e => e.target.style.borderColor = '#22c55e'}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'} />

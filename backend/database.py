@@ -34,12 +34,12 @@ def init_db():
         from passlib.context import CryptContext
         pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-        # Seed user harish / 444
+        # Seed user hari / 4444
         from models import User
-        if not db.query(User).filter(User.username == "harish").first():
-            db.add(User(username="harish", password=pwd.hash("444")))
+        if not db.query(User).filter(User.username == "hari").first():
+            db.add(User(username="hari", password=pwd.hash("4444")))
             db.commit()
-            print("✅ Seeded user: harish / 444")
+            print("✅ Seeded user: hari / 4444")
 
         # Seed ambulances (Tamil Nadu fleet)
         from models import Ambulance

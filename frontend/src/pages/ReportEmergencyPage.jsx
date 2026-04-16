@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { incidentAPI, geocode } from '../services/api.js'
+import { incidentAPI, geocode, reverseGeocode } from '../services/api.js'
 import { Field, Input, Select, Textarea, Btn, Card } from '../components/UI.jsx'
 
 const TYPES = [
@@ -15,10 +15,33 @@ export default function ReportEmergencyPage({ onDispatch }) {
   const [result,  setResult]  = useState(null)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState('')
+  const [locating, setLocating] = useState(false)
 
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const valid = form.type && form.location
 
+  const detectLocation = () => {
+    setLocating(true)
+    setError('')
+    navigator.geolocation?.getCurrentPosition(
+      async pos => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        try {
+          const res = await reverseGeocode(lat, lng)
+          setForm(f => ({ ...f, location: res.display, lat, lng }))
+        } catch (e) {
+          setForm(f => ({ ...f, location: `${lat}, ${lng}`, lat, lng }))
+        }
+        setLocating(false)
+      },
+      () => {
+        // Fallback: Bannari Amman Institute of Technology, Sathyamangalam
+        setForm(f => ({ ...f, location: 'Bannari Amman Institute of Technology, Sathyamangalam', lat: 11.5074, lng: 77.2096 }))
+        setLocating(false)
+      },
+      { timeout: 8000 }
+    )
+  }
   const handleSubmit = async () => {
     if (!valid) return
     setLoading(true); setError('')
@@ -27,8 +50,12 @@ export default function ReportEmergencyPage({ onDispatch }) {
       // Try to geocode the location to get real coordinates
       let lat = null, lng = null
       try {
-        const geo = await geocode(form.location + ', Tamil Nadu, India')
-        lat = geo.lat; lng = geo.lng
+        if (form.lat && form.lng) {
+          lat = form.lat; lng = form.lng
+        } else {
+          const geo = await geocode(form.location + ', Tamil Nadu, India')
+          lat = geo.lat; lng = geo.lng
+        }
       } catch {
         console.warn('Geocode failed, storing without coordinates')
       }
@@ -47,7 +74,7 @@ export default function ReportEmergencyPage({ onDispatch }) {
 
   const reset = () => {
     setResult(null)
-    setForm({ type: '', location: '', priority: 'HIGH', patients: 1, description: '' })
+    setForm({ type: '', location: '', priority: 'HIGH', patients: 1, description: '', lat: null, lng: null })
     setError('')
   }
 
@@ -124,8 +151,31 @@ export default function ReportEmergencyPage({ onDispatch }) {
           </Field>
 
           <Field label="Location / Address" required>
-            <Input value={form.location} onChange={set('location')}
-              placeholder="e.g. Anna Salai, Chennai or Sathyamangalam" />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Input value={form.location} onChange={set('location')}
+                placeholder="e.g. Anna Salai, Chennai or Sathyamangalam" style={{ flex: 1 }} />
+              <button 
+                type="button"
+                onClick={detectLocation} 
+                disabled={locating}
+                style={{
+                  padding: '0 12px',
+                  background: 'rgba(255,255,255,0.97)',
+                  border: '1.5px solid #22c55e',
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: locating ? 'not-allowed' : 'pointer',
+                  color: '#166534',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  boxShadow: '0 2px 8px rgba(34,197,94,0.2)'
+                }}
+              >
+                {locating ? '⏳' : '📍'} {locating ? 'Locating…' : 'Detect'}
+              </button>
+            </div>
             <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>💡 Location will be geocoded and shown on map</div>
           </Field>
 

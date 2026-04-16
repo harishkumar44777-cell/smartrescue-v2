@@ -63,6 +63,14 @@ export const geocode = async (query) => {
   return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display: data[0].display_name }
 }
 
+export const reverseGeocode = async (lat, lng) => {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
+  const data = await res.json()
+  if (data.error) throw new Error('Location not found')
+  return { display: data.display_name, address: data.address }
+}
+
 // WebSocket factory
 export const createWS = (onMessage, onOpen, onClose) => {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
