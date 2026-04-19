@@ -89,6 +89,27 @@ def root():
 def health():
     return {"status": "ok"}
 
+@app.get("/api/debug", response_model=None)
+def debug_db():
+    import traceback
+    try:
+        init_db()
+        
+        # Verify db logic works now
+        db = SessionLocal()
+        from models import User
+        user = db.query(User).filter(User.username == "hari").first()
+        db.close()
+        
+        return {
+            "status": "db_success", 
+            "user_found": user is not None,
+            "user_name": user.username if user else None,
+            "host": os.getenv("DB_HOST", "not set")
+        }
+    except Exception as e:
+        return {"status": "db_error", "error": str(e), "trace": traceback.format_exc()}
+
 # --- Frontend Serving Logic ---
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 
