@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: smartrescue-api
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      # You should replace these with actual Render PostgreSQL/MySQL credentials strings when deploying database
+      - key: DB_HOST
+        value: 'your-database-host'
+      - key: DB_USER
+        value: 'your-database-user'
+      - key: DB_PASSWORD
+        value: 'your-database-password'
+      - key: DB_NAME
+        value: 'smartrescue'
+
+  - type: web
+    name: smartrescue-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: smartrescue-api
+          envVarKey: RENDER_EXTERNAL_URL

@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const baseURL = import.meta.env.VITE_API_URL || '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: baseURL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
 })
@@ -73,9 +75,18 @@ export const reverseGeocode = async (lat, lng) => {
 
 // WebSocket factory
 export const createWS = (onMessage, onOpen, onClose) => {
-  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  const host  = window.location.hostname
-  const ws    = new WebSocket(`${proto}://${host}:8000/ws/live`)
+  let wsUrl = ''
+  if (import.meta.env.VITE_API_URL) {
+    const url = new URL(import.meta.env.VITE_API_URL)
+    const wsProto = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    wsUrl = `${wsProto}//${url.host}/ws/live`
+  } else {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    const host  = window.location.hostname
+    wsUrl = `${proto}://${host}:8000/ws/live`
+  }
+
+  const ws = new WebSocket(wsUrl)
   ws.onopen    = onOpen  || (() => console.log('WS connected'))
   ws.onclose   = onClose || (() => console.log('WS disconnected'))
   ws.onerror   = (e) => console.warn('WS error', e)
