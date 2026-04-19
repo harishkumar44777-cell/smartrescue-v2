@@ -61,14 +61,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router)
-app.include_router(amb_router)
-app.include_router(hosp_router)
-app.include_router(inc_router)
-app.include_router(dispatch_router)
-app.include_router(dash_router)
+app.include_router(auth_router, prefix="/api")
+app.include_router(amb_router, prefix="/api")
+app.include_router(hosp_router, prefix="/api")
+app.include_router(inc_router, prefix="/api")
+app.include_router(dispatch_router, prefix="/api")
+app.include_router(dash_router, prefix="/api")
 
-@app.websocket("/ws/live")
+import os
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+@app.websocket("/api/ws/live")
 async def websocket_live(ws: WebSocket):
     await manager.connect(ws)
     try:
@@ -77,10 +81,24 @@ async def websocket_live(ws: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(ws)
 
-@app.get("/")
+@app.get("/api")
 def root():
-    return {"status": "SmartRescue v2 running 🚑", "docs": "/docs"}
+    return {"status": "SmartRescue v2 API running 🚑", "docs": "/docs"}
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+# --- Frontend Serving Logic ---
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+
+if os.path.exists(frontend_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+    
+    # Catch-all to serve index.html for React Router
+    @app.get("/{catchall:path}")
+    async def serve_react_app(catchall: str):
+        file_path = os.path.join(frontend_dist, catchall)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(frontend_dist, "index.html"))

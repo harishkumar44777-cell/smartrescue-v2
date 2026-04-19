@@ -5,14 +5,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_URL = (
-    f"mysql+pymysql://{os.getenv('DB_USER','root')}:"
-    f"{os.getenv('DB_PASSWORD','root123')}@"
-    f"{os.getenv('DB_HOST','localhost')}/"
-    f"{os.getenv('DB_NAME','smartrescue')}?charset=utf8mb4"
-)
+DB_HOST = os.getenv('DB_HOST')
 
-engine       = create_engine(DB_URL, pool_pre_ping=True, pool_recycle=3600)
+if DB_HOST:
+    # Use MySQL if DB_HOST is provided
+    DB_URL = (
+        f"mysql+pymysql://{os.getenv('DB_USER','root')}:"
+        f"{os.getenv('DB_PASSWORD','root123')}@"
+        f"{DB_HOST}/"
+        f"{os.getenv('DB_NAME','smartrescue')}?charset=utf8mb4"
+    )
+    engine = create_engine(DB_URL, pool_pre_ping=True, pool_recycle=3600)
+else:
+    # Fallback to SQLite (perfect for testing/demoing on Render without setup)
+    DB_URL = "sqlite:///./smartrescue.db"
+    engine = create_engine(DB_URL, connect_args={"check_same_thread": False})
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Base(DeclarativeBase):

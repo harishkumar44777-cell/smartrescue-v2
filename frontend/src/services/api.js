@@ -79,11 +79,12 @@ export const createWS = (onMessage, onOpen, onClose) => {
   if (import.meta.env.VITE_API_URL) {
     const url = new URL(import.meta.env.VITE_API_URL)
     const wsProto = url.protocol === 'https:' ? 'wss:' : 'ws:'
-    wsUrl = `${wsProto}//${url.host}/ws/live`
+    wsUrl = `${wsProto}//${url.host}/api/ws/live`
   } else {
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const host  = window.location.hostname
-    wsUrl = `${proto}://${host}:8000/ws/live`
+    const host  = isLocalDev ? `${window.location.hostname}:8000` : window.location.host
+    wsUrl = `${proto}://${host}/api/ws/live`
   }
 
   const ws = new WebSocket(wsUrl)
