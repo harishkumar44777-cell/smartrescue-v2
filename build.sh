@@ -17,6 +17,7 @@ npm run build
 cd ..
 
 echo "▶ Installing Python backend dependencies..."
+pip install --upgrade pip
 pip install -r backend/requirements.txt
 
 echo "▶ Build complete! App is ready."
