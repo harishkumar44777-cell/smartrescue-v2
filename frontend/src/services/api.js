@@ -1,9 +1,7 @@
 import axios from 'axios'
 
-const baseURL = import.meta.env.VITE_API_URL || '/api'
-
 const api = axios.create({
-  baseURL: baseURL,
+  baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
 })
@@ -76,16 +74,10 @@ export const reverseGeocode = async (lat, lng) => {
 // WebSocket factory
 export const createWS = (onMessage, onOpen, onClose) => {
   let wsUrl = ''
-  if (import.meta.env.VITE_API_URL) {
-    const url = new URL(import.meta.env.VITE_API_URL)
-    const wsProto = url.protocol === 'https:' ? 'wss:' : 'ws:'
-    wsUrl = `${wsProto}//${url.host}/api/ws/live`
-  } else {
-    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const host  = isLocalDev ? `${window.location.hostname}:8000` : window.location.host
-    wsUrl = `${proto}://${host}/api/ws/live`
-  }
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const host  = isLocalDev ? `${window.location.hostname}:8000` : window.location.host
+  wsUrl = `${proto}://${host}/api/ws/live`
 
   const ws = new WebSocket(wsUrl)
   ws.onopen    = onOpen  || (() => console.log('WS connected'))

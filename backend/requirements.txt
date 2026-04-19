@@ -3,7 +3,8 @@ uvicorn[standard]
 sqlalchemy
 pymysql
 python-jose[cryptography]
-passlib[bcrypt]
+passlib==1.7.4
+bcrypt==3.2.2
 python-multipart
 websockets
 pydantic
